@@ -1,238 +1,107 @@
-// Селекторы для элементов корзины
-let cartIcon = document.querySelector("#cart-icon");
-let cart = document.querySelector(".cart");
-let closeCart = document.querySelector("#close-cart");
-let tg = window.Telegram.WebApp;
+const TelegramBot = require('node-telegram-bot-api');
+const axios = require('axios');
 
-// Открыть корзину
-cartIcon.addEventListener("click", () => {
-    cart.classList.add("active");
-});
+// Инициализация бота
+const bot = new TelegramBot('6963877013:AAFUrMcy-J8K6syj4_KLoEZVuMbCZ2hFpt0', { polling: true });
 
-// Закрыть корзину
-closeCart.addEventListener("click", () => {
-    cart.classList.remove("active");
-});
+// Хранение данных пользователя (упрощенная замена FSM)
+let userData = {};
 
-// Ждем, пока DOM загрузится, прежде чем запускать функцию ready
-if (document.readyState === 'loading') {
-    document.addEventListener("DOMContentLoaded", ready);
-} else {
-    ready();
+// Функция для отправки данных в Telegram группу
+async function sendDataToTelegram(data) {
+    try {
+        await bot.sendMessage("-1002352220560", data);
+        console.log("Данные успешно отправлены в группу.");
+    } catch (error) {
+        console.error("Ошибка при отправке сообщения в Telegram:", error);
+    }
 }
 
-// ====================== Слайдер ===========================
-
-$(document).ready(function(){
-    $('.slider').each(function(){
-        var $this = $(this);
-        var $imgs = $this.find('.product-img');
-        var imgCount = $imgs.length;
-        var currentIndex = 0;
-        var autoSlideInterval = 2000; // Интервал авто-переключения в миллисекундах (здесь 2000 мс = 2 секунд)
-
-        $imgs.hide().first().show();
-        // $this.append('<button class="prev">Prev</button><button class="next">Next</button>');
-
-        function showImage(index) {
-            $imgs.hide().eq(index).show();
-        }
-
-        function nextImage() {
-            currentIndex = (currentIndex + 1) % imgCount;
-            showImage(currentIndex);
-        }
-
-        function prevImage() {
-            currentIndex = (currentIndex - 1 + imgCount) % imgCount;
-            showImage(currentIndex);
-        }
-
-        function autoSlide() {
-            nextImage();
-        }
-
-        $this.find('.prev').click(prevImage);
-        $this.find('.next').click(nextImage);
-
-        // Запуск авто-переключения
-        var autoSlideIntervalId = setInterval(autoSlide, autoSlideInterval);
-
-        // Остановка авто-переключения при наведении мыши на слайдер
-        $this.mouseenter(function() {
-            clearInterval(autoSlideIntervalId);
-        });
-
-        // Возобновление авто-переключения при уходе мыши с слайдера
-        $this.mouseleave(function() {
-            autoSlideIntervalId = setInterval(autoSlide, autoSlideInterval);
-        });
-    });
-});
-
-
-// ========================================================== 
-
-
-function ready() {
-    // Добавляем слушатели событий для кнопок удаления из корзины
-    let removeCartButtons = document.querySelectorAll(".cart-remove");
-    removeCartButtons.forEach(button => {
-        button.addEventListener("click", removeItemFromCart);
-    });
-
-    // Добавляем слушатели событий для ввода количества
-    let quantityInputs = document.querySelectorAll(".cart-quantity");
-    quantityInputs.forEach(input => {
-        input.addEventListener("change", quantityChanged);
-    });
-
-    // Добавляем слушатели событий для кнопок "добавить в корзину"
-    let addCartButtons = document.querySelectorAll('.add-cart');
-    addCartButtons.forEach(button => {
-        button.addEventListener("click", addItemToCart);
-    });
-
-    // Добавляем слушатель событий для кнопки покупки
-    document.querySelector(".btn-buy").addEventListener("click", buyButtonClicked);
-
-    // Добавляем слушатель событий для фильтрации продуктов по имени
-    document.getElementById('name-filter').addEventListener('change', function() {
-        let filterValue = this.value.toLowerCase();
-        let productBoxes = document.querySelectorAll('.product-box');
-        productBoxes.forEach(box => {
-            let productName = box.querySelector('.product-title').innerText.toLowerCase();
-            box.style.display = (filterValue === 'all' || productName === filterValue) ? 'block' : 'none';
-        });
-    });
+// Функция для получения данных с сайта
+async function fetchDataFromWebsite() {
+    try {
+        const response = await axios.get('https://script.google.com/macros/s/AKfycbxhJFzSdNm8O5bbH4MEEzahMn9LZJVZoLjKzGKlTms8VcnWOEkn7h61Dsqc7ETHgmBBKQ/exec');
+        return response.data;
+    } catch (error) {
+        console.error("Ошибка при получении данных с веб-сайта:", error);
+        return null;
+    }
 }
 
-// Обработка нажатия кнопки покупки
-function buyButtonClicked() {
-    let cartContent = document.querySelector(".cart-content");
-    let items = cartContent.querySelectorAll('.cart-box');
+// Стартовая команда
+bot.onText(/\/start/, (msg) => {
+    const chatId = msg.chat.id;
 
-    // Проверка на пустую корзину
-    if (items.length === 0) {
-        alert("Sizning savatingiz bo'sh. Iltimos, buyurtma berishdan oldin narsalarni savatga qo'shing..");
+    const webAppButton = {
+        text: 'Veb-sahifani oching',
+        web_app: { url: 'https://script.google.com/macros/s/AKfycbxhJFzSdNm8O5bbH4MEEzahMn9LZJVZoLjKzGKlTms8VcnWOEkn7h61Dsqc7ETHgmBBKQ/exec' }
+    };
+
+    const options = {
+        reply_markup: {
+            keyboard: [[webAppButton]],
+            resize_keyboard: true
+        }
+    };
+
+    bot.sendMessage(chatId, "🎉 Muffins’ga xush kelibsiz! 🎂🍰\nBuyurtma berish uchun quyidagi tugmani bosing.", options);
+});
+
+// Обработчик данных с веб-приложения
+bot.on('message', (msg) => {
+    if (msg.web_app_data) {
+        const chatId = msg.chat.id;
+        const data = JSON.parse(msg.web_app_data.data);
+        userData[chatId] = { items: data };
+
+        bot.sendMessage(chatId, "Iltimos, ismingizni kiriting:");
+    }
+});
+
+// Запрос имени пользователя
+bot.on('message', (msg) => {
+    const chatId = msg.chat.id;
+
+    if (!userData[chatId]?.name && msg.text) {
+        userData[chatId].name = msg.text;
+        bot.sendMessage(chatId, "Yetkazib berish manzilini kiriting:");
+    } else if (userData[chatId]?.name && !userData[chatId].location && msg.text) {
+        userData[chatId].location = msg.text;
+        bot.sendMessage(chatId, "Telefon raqamingizni kiriting:");
+    } else if (userData[chatId]?.location && !userData[chatId].phone_number && msg.text) {
+        userData[chatId].phone_number = msg.text;
+        sendSummary(chatId);
+    }
+});
+
+// Подсчет общей суммы
+function calculateTotalPrice(items) {
+    let total = 0;
+    items.forEach(item => {
+        let price = parseFloat(item.price.replace('Narxi: ', '').trim());
+        let quantity = parseInt(item.quantity);
+        total += price * quantity;
+    });
+    return total;
+}
+
+// Отправка итоговой информации
+async function sendSummary(chatId) {
+    const data = userData[chatId];
+    if (!data || !data.items || !data.name || !data.location || !data.phone_number) {
+        bot.sendMessage(chatId, "Произошла ошибка, недостаточно данных.");
         return;
     }
 
-    // Собираем данные о каждом товаре в корзине
-    let products = [];
-    items.forEach(item => {
-        let imgSrc = item.querySelector('.cart-img').src;
-        let title = item.querySelector('.cart-product-title').innerText;
-        let price = item.querySelector('.cart-price').innerText;
-        let quantity = item.querySelector('.cart-quantity').value;
-        let size = item.querySelector('.cart-size').innerText.replace('Размер: ', '');
-        let color = item.querySelector('.cart-color').innerText.replace('Цвет: ', '');
+    let summary = `Mijoz Ismi: ${data.name}\nYetkazib berish manzili: ${data.location}\nTelefon: ${data.phone_number}\n\n=========================\nBuyurtma qilingan mahsulotlar:\n=========================\n`;
 
-        products.push({ 
-            imgSrc: imgSrc,
-            title: title,
-            price: price,
-            quantity: quantity,
-            size: size,
-            color: color
-        });
+    data.items.forEach(item => {
+        summary += `Rasm: ${item.imgSrc}\n${item.title}\n${item.price}\nSoni: ${item.quantity}\n=========================\n`;
     });
 
-    if (tg) {
-        tg.sendData(JSON.stringify(products)); // Отправка данных о товарах в виде массива JSON
-        // Очистка корзины после покупки
-        while (cartContent.firstChild) {
-            cartContent.removeChild(cartContent.firstChild);
-        }
-        updateTotal();
-    } else {
-        console.error("Telegram veb-ilovasi mavjud emas.");
-    }
-}
+    const totalPrice = calculateTotalPrice(data.items);
+    summary += `Jami summa: ${totalPrice}\n`;
 
-// Удаление товара из корзины
-function removeItemFromCart(event) {
-    let buttonClicked = event.target;
-    buttonClicked.parentElement.remove();
-    updateTotal();
-}
-
-// Обработка изменения количества товаров
-function quantityChanged(event) {
-    let input = event.target;
-    if (isNaN(input.value) || input.value <= 0) {
-        input.value = 1;
-    }
-    updateTotal();
-}
-
-// Добавление товара в корзину
-function addItemToCart(event) {
-    let button = event.target;
-    let shopProducts = button.parentElement;
-    let title = shopProducts.querySelector(".product-title").innerText;
-    let price = shopProducts.querySelector(".price").innerText;
-    let productImg = shopProducts.querySelector(".product-img").src;
-    let size = shopProducts.querySelector(".size-selector").value;
-    let color = shopProducts.querySelector(".color-selector").value;
-    let productId = shopProducts.dataset.productId;
-
-    addProductToCart(title, price, productImg, size, color, productId);
-    updateTotal();
-}
-
-// Добавление продукта в корзину
-function addProductToCart(title, price, productImg, size, color, productId) {
-    let cartItems = document.querySelector(".cart-content");
-
-    // Создание уникального ключа для каждой комбинации productId, size и color
-    let productKey = productId + '-' + size + '-' + color;
-    let cartItemsKeys = cartItems.getElementsByClassName("cart-product-key");
-
-    for (let i = 0; i < cartItemsKeys.length; i++) {
-        if (cartItemsKeys[i].innerText.trim() === productKey.trim()) {
-            alert("Siz allaqachon bir xil o'lcham va rangdagi bu mahsulotni savatingizga qo'shgansiz");
-            return;
-        }
-    }
-
-    // Создание нового элемента корзины
-    let cartShopBox = document.createElement("div");
-    cartShopBox.classList.add("cart-box");
-
-    let cartBoxContent = `
-        <img src="${productImg}" alt="" class="cart-img">
-        <div class="detail-box">
-            <div class="cart-product-title">${title}</div>
-            <div class="cart-price">${price}</div>
-            <div class="cart-size">${size}</div>
-            <div class="cart-color">${color}</div>
-            <input type="number" value="1" class="cart-quantity">
-        </div>
-        <i class='bx bx-trash-alt cart-remove'></i>
-        <div class="cart-product-id" style="display: none;">${productId}</div>
-        <div class="cart-product-key" style="display: none;">${productKey}</div>
-    `;
-
-    cartShopBox.innerHTML = cartBoxContent;
-    cartItems.append(cartShopBox);
-
-    // Добавление слушателей событий для нового элемента корзины
-    cartShopBox.querySelector(".cart-remove").addEventListener("click", removeItemFromCart);
-    cartShopBox.querySelector('.cart-quantity').addEventListener("change", quantityChanged);
-}
-
-// Обновление общей цены в корзине
-function updateTotal() {
-    let cartBoxes = document.querySelectorAll('.cart-box');
-    let total = 0;
-    cartBoxes.forEach(cartBox => {
-        let priceElement = cartBox.querySelector('.cart-price');
-        let quantityElement = cartBox.querySelector('.cart-quantity');
-        let price = parseFloat(priceElement.innerText.replace("sum ", "").replace(",", ""));
-        let quantity = quantityElement.value;
-        total += price * quantity;
-    });
-    total = total.toFixed(3);
-    document.querySelector(".total-price").innerText = "sum " + total;
+    await sendDataToTelegram(summary);
+    bot.sendMessage(chatId, "Buyurtmangiz qabul qilindi. Rahmat!");
 }
