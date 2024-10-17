@@ -1,2 +1,2 @@
-worker: python kiritish.py 
-
+worker1: python kiritish.py 
+worker2: python main.py
