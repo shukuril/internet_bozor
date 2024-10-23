@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shop with Google Sheets</title>
+  <link rel="stylesheet" href="https://unpkg.com/boxicons@latest/css/boxicons.min.css">
+  <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+
+  <style>
+    /* General Styles */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    :root {
+      --tg-theme-button-color: #141313;
+      --tg-theme-text-color: #ffffff;
+      --tg-theme-bg-color: #212121;
+    }
+
+    body {
+      background-color: var(--tg-theme-bg-color);
+      color: var(--tg-theme-text-color);
+      line-height: 1.6;
+    }
+
+    a {
+      text-decoration: none;
+      color: var(--tg-theme-text-color);
+    }
+
+    h1, h2, h3 {
+      margin-bottom: var(--tg-theme-bg-color);
+      font-weight: 600;
+    }
+
+    /* Container */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* Header */
+    header {
+      background-color: var(--tg-theme-bg-color);
+      color: var(--tg-theme-text-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    header .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header .logo {
+      font-size: 28px;
+      font-weight: bold;
+    }
+
+    header .bx-shopping-bag {
+      font-size: 28px;
+      cursor: pointer;
+      color: var(--tg-theme-text-color);
+      transition: color 0.3s ease;
+    }
+
+    header .bx-shopping-bag:hover {
+      color: var(--tg-theme-text-color);
+    }
+
+    /* Filter Input */
+    .filter-container {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .detail-box .bx bx-trash-alt {
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .bx {
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .filter-container input {
+      padding: 10px 20px;
+      width: 90%;
+      font-size: 15px;
+      border: 2px solid #ddd;
+      border-radius: 30px;
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
+      margin-bottom: 10px;
+    }
+
+    .filter-container input:focus {
+      border-color: #333;
+      box-shadow: 0 0 5px rgba(51, 51, 51, 0.5);
+    }
+
+    /* Product Cards */
+    .shop-content {
+      grid-template-columns: repeat(auto-fit, minmax(220px, auto));
+      gap: 1.5rem;
+    }
+
+    .product-box {
+      background-color: var(--tg-theme-bg-color);
+      border-radius: 12px;
+      padding: 15px;
+      width: 260px;
+      box-shadow: 0 20px 20px rgba(0, 0, 0, 0.5);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      overflow: hidden;
+      position: relative;
+      margin-bottom: 10px;
+    }
+
+    /* .product-box:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    } */
+
+    .product-box img {
+      width: 100%;
+      height: 400px;
+      border-radius: 8px;
+      transition: transform 0.3s ease;
+      object-fit: cover;
+    }
+
+    /* .product-box:hover img {
+      transform: scale(1.1);
+    } */
+
+    .product-box h2 {
+      font-size: 16px;
+      margin: 5px 0;
+      color: var(--tg-theme-text-color);
+    }
+
+    .product-box p {
+      font-size: 16px;
+      color: var(--tg-theme-text-color);
+      margin: 10px;
+      font-weight: 600;
+    }
+
+    .product-details {
+      margin-top: 10px;
+      display: ruby-text;
+    }
+
+    .product-details label {
+      font-weight: bold;
+      margin-left: 10px;
+    }
+
+    .product-details select {
+      padding: 7px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      outline: none;
+      transition: border-color 0.3s ease;
+      margin-right: 15px;
+    }
+
+    .product-details select:focus {
+      border-color: var(--tg-theme-bg-color);
+    }
+
+    #buy-button {
+      background-color: var(--tg-theme-button-color);
+      color: var(--tg-theme-text-color);
+      padding: 12px 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-top: 15px;
+      width: 100%;
+      font-size: 16px;
+      transition: var(--tg-theme-bg-color);
+    }
+
+    #buy-button:hover {
+      background-color: var(--tg-theme-bg-color);
+      color: var(--tg-theme-text-color);
+    }
+
+    .cart-quantity-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px; /* Отступы между кнопками и полем ввода */
+      margin: 0 0 15px;
+    }
+
+    .decrease-btn, .increase-btn {
+      background-color: var(--tg-theme-text-color); /* Светло-серый фон */
+      border: 1px solid #ccc; /* Тонкая рамка */
+      width: 30px; /* Ширина кнопки */
+      height: 30px; /* Высота кнопки */
+      font-size: 20px; /* Размер шрифта для знаков + и - */
+      font-weight: bold;
+      cursor: pointer;
+      border-radius: 5px; /* Слегка закругленные края */
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      transition: background-color 0.3s ease;
+    }
+
+    .decrease-btn:hover, .increase-btn:hover {
+      background-color: var(--tg-theme-bg-color); /* Изменение цвета при наведении */
+    }
+
+    .cart-quantity {
+      width: 50px; /* Ширина поля ввода */
+      text-align: center; /* Текст по центру */
+      font-size: 16px; /* Размер шрифта */
+      border: 1px solid #ccc; /* Тонкая рамка */
+      border-radius: 5px; /* Закругленные углы */
+      padding: 5px; /* Отступы внутри поля */
+      background-color: var(--tg-theme-bg-color); /* Легкий фон */
+      color: var(--tg-theme-text-color);
+    }
+
+    .cart-quantity:focus {
+      outline: none; /* Убираем стандартную подсветку при фокусе */
+      border-color: #007bff; /* Изменение цвета рамки при фокусе */
+      box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Подсветка поля при фокусе */
+    }
+
+    /* Стили для скроллбара */
+    .cart-content {
+        max-height: 500px; /* Максимальная высота для отображения скролла */
+        /* Показывать вертикальный скролл при необходимости */
+        overflow-y: scroll; 
+        /* Скрытие стандартного скроллбара */
+        scrollbar-width: none; /* Устанавливаем тонкий скроллбар */
+        -ms-overflow-style: none; /* Устанавливаем стиль скроллбара для IE/Edge */
+    }
+
+    /* Стили для скроллбара в веб-китах (Chrome, Safari) */
+    .cart-content::-webkit-scrollbar {
+        width: 5px; /* Устанавливаем ширину скроллбара */
+    }
+
+    /* Стили для трека скроллбара в веб-китах */
+    .cart-content::-webkit-scrollbar-track {
+        background: var(--tg-theme-bg-color); /* Устанавливаем прозрачный фон для трека скроллбара */
+    }
+
+    /* Стили для ползунка скроллбара в веб-китах */
+    .cart-content::-webkit-scrollbar-thumb {
+        background-color: var(--tg-theme-bg-color); /* Цвет ползунка скроллбара */
+        border-radius: 8px; /* Радиус скругления углов ползунка */
+    }
+
+    .size-container, .color-container {
+      display: flex;
+      align-items: center; /* Выравнивание по центру */
+      margin: 5px 0; /* Отступы */
+    }
+
+    .size-container label, .color-container label {
+      margin-right: 10px; /* Отступ между label и select */
+    }
+
+
+
+
+    /* Cart */
+    .cart {
+      position: fixed;
+      right: 0;
+      top: 0;
+      width: 50%;
+      height: 100%;
+      background: var(--tg-theme-bg-color);
+      border-left: 2px solid #ddd;
+      box-shadow: -2px 0 4px hsl(0 4% 15% / 10%);
+      padding: 20px;
+      transform: translateX(100%);
+      transition: transform 0.4s ease;
+      z-index: 200;
+      overflow-x: scroll;
+    }
+
+    #cart-icon {
+      display: block; /* Убедитесь, что это не 'none' */
+      font-size: 24px; /* Убедитесь, что иконка достаточно большая */
+      cursor: pointer; /* Указатель мыши для интерактивности */
+    }
+
+
+    .cart.active {
+      transform: translateX(0);
+      height: 130%;
+    }
+
+    .cart-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: var(--tg-theme-text-color);
+      border-bottom: 1px solid #fff;
+      padding-bottom: 0.5rem; 
+      border-radius: 5px;
+    }
+
+    .cart-content {
+      max-height: 60%;
+      overflow-y: auto;
+    }
+
+    .cart-box {
+      display: grid;
+      grid-template-columns: 45% 50% 10%;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 1rem;
+      margin-right: 3rem;
+      border-bottom: 1px solid #ffff;
+    }
+
+    .cart-box img{
+      width: 100px;
+      border: 1px solid #0000;
+      border-radius: 10px;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .cart-item h3 {
+      font-size: 18px;
+    }
+
+    .cart-item p {
+      font-size: 16px;
+    }
+
+    .cart-size-color {
+      margin: 10px 0; /* Отступы между другими элементами */
+    }
+
+    .cart-size, .cart-color {
+      font-size: 16px; /* Размер шрифта */
+      color: #ffff; /* Цвет текста */
+    }
+
+
+    .cart-item button {
+      background-color: var(--tg-theme-bg-color);
+      color: var(--tg-theme-text-color);
+      border: none;
+      padding: 5px 10px;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .cart-item button:hover {
+      background-color: var(--tg-theme-bg-color);
+    }
+
+    .cart-remow {
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .total {
+      display: flex;
+      justify-content: space-between;
+      font-size: 16px;
+      font-weight: bold;
+      border-top: 1px solid #ffff;
+      border-radius: 5px;
+      padding: 5px;
+      margin-top: 20px;
+    }
+
+    .btn-buy {
+      background-color: var(--tg-theme-button-color);
+      color: var(--tg-theme-text-color);
+      padding: 15px 20px;
+      width: 100%;
+      margin-top: 5px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+
+    .btn-buy:hover {
+      background-color: var(--tg-theme-bg-color);
+      color: var(--tg-theme-text-color);
+    }
+
+    #close-cart {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    /* Scroll to Top Button */
+    .fi fi-rr-angle-small-up {
+      position: fixed;
+      bottom: 40px;
+      right: 40px;
+      background-color: #1f1f1f;
+      color: var(--tg-theme-text-color);
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      font-size: 24px;
+      cursor: pointer;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      transition: background-color 0.3s ease;
+    }
+
+    .fi fi-rr-angle-small-up :hover {
+      background-color: var(--tg-theme-bg-color);
+      color: var(--tg-theme-text-color);
+    }
+
+    .fi fi-rr-angle-small-up.show {
+      display: flex;
+    }
+
+    /* Для экранов с шириной менее 1080px */
+    @media only screen and (max-width: 1080px) {
+      .nav {
+          padding: 15px; /* Пример: уменьшение отступов по бокам */
+      }
+
+      /* Пример: изменение количества колонок в магазине */
+      .section {
+          padding: 3rem 0 2rem;
+      }
+      .container{
+          margin: 0 auto;
+          width: 90%;
+          padding: 0;
+      }
+    }
+
+    /* Adjusting the product box width on mobile devices */
+    @media (max-width: 768px) {
+      .shop-content {
+        justify-content: center;
+        width: 100%;
+      }
+
+      .product-box {
+        width: 100%; /* Ensures the product boxes take up 90% of the width */
+      }
+
+      .product-img {
+        padding: 0;
+      }
+
+      .cart {
+        width: 100%;
+      }
+      .nav container {
+        padding: 0;
+      }
+    }
+
+
+    /* Для экранов с шириной менее 480px */
+    @media only screen and (max-width: 400px) {
+      .nav{
+          padding: 11px;
+      }
+      .logo{
+          font-size: 1rem;
+      }
+      .cart{
+          width: 320px;
+      }
+      .cart-content {
+          overflow-y: auto; /* Скрыть скроллер на мобильных устройствах */
+      }
+    }
+    @media only screen and (max-width: 360px) {
+      .shop{
+          margin-top: 1rem !important;
+      }
+      .cart{
+          width: 280px;
+      }
+    }
+  </style>
+
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="nav container">
+      <a href="#" class="logo"><b>Muffins</b></a>
+      <i class="bx bx-shopping-bag" id="cart-icon"></i>
+    </div>
+  </header>
+
+  <!-- Filter Input -->
+  <div class="filter-container">
+    <input type="text" id="search-input" placeholder="Mahsulotni qidiring..." />
+    <h2 class="section-title">Mahsulotlar</h2>
+  </div>
+
+  <!-- Cart -->
+  <div class="cart">
+    <h2 class="cart-title">Sizning Mahsulotlaringiz</h2>
+    <!-- Content -->
+    <div class="cart-content"></div>
+
+    <!-- Total -->
+    <div class="total">
+      <div class="total-title">Jami: </div>
+      <div class="total-price">sum 0</div>
+    </div>
+    <!-- Buy button -->
+    <button id="buy-button">Sotib olish</button>
+
+    <!-- Cart close -->
+    <i class='bx bx-x' id="close-cart"></i>
+  </div>
+
+  <!-- Product Cards Container -->
+  <section class="shop container">
+    <div id="data-container" class="shop-content">
+      <!-- Dynamic product cards will be generated here from Google Sheets -->
+    </div>
+  </section>
+
+  <!-- Scroll to Top Button -->
+  <button class="fi fi-rr-angle-small-up" onclick="scrollToTop()"></button>
+
+  <script src="main.js"></script>
+  <script src="app.js"></script>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+
+  <script>
+    let cart = [];
+    const tg = window.Telegram.WebApp; // Инициализация Telegram WebApp API
+
+    window.dataProducts = []; // Глобальная переменная для хранения данных продуктов
+
+    document.addEventListener("DOMContentLoaded", function() {
+        // Проверка, что Telegram WebApp API инициализирован
+        if (!tg) {
+            console.error("Telegram Web App API не доступен.");
+            alert("Siz ushbu saytni Telegram orqali ochishingiz kerak.");
+            return;
+        }
+
+        // Fetch and display data from Google Sheets
+        function fetchData() {
+            google.script.run.withSuccessHandler(function(data) {
+                window.dataProducts = data; // Сохраняем данные глобально для фильтрации
+                displayProducts(data);
+            }).getAllDataWithImages(); // Вызов Google Apps Script функции
+        }
+
+        // Конвертация ссылки Google Drive в ссылку на изображение
+        function convertDriveLinkToImage(link) {
+            return link.replace(/drive\.google\.com\/.*?\/d\/(.*?)(\/.*)?/, 'drive.google.com/uc?export=view&id=$1');
+        }
+
+        // Display products in the container
+        function displayProducts(data) {
+            const container = document.getElementById("data-container");
+            container.innerHTML = ""; // Очистить предыдущий контент
+
+            data.forEach((item, index) => {
+                const card = document.createElement("div");
+                card.className = "image-card product-box";
+                card.setAttribute("data-product-id", index + 1);
+
+                const img = document.createElement("img");
+                img.src = convertDriveLinkToImage(item.image);
+                img.className = "product-img";
+
+                const title = document.createElement("h2");
+                title.className = "product-title";
+                title.textContent = `Tovar nomi: ${item.title}`;
+
+                const price = document.createElement("p");
+                price.className = "price";
+                price.textContent = `Narxi: ${item.price}`;
+
+                const description = document.createElement("p");
+                description.textContent = `Tavsif: ${item.description}`;
+
+                // Динамические размеры и цвета из данных продукта
+                const sizes = item.sizes || []; // Предполагаем, что размеры находятся в поле sizes
+                const colors = item.colors || []; // Предполагаем, что цвета находятся в поле colors
+
+                // Контейнер для выбора размера
+                const sizeContainer = document.createElement("div");
+                sizeContainer.className = "size-container"; // Для стилей, если нужно
+
+                // Название для выбора размера
+                const sizeLabel = document.createElement("label");
+                sizeLabel.textContent = "O'lchov"; // Название для размера
+                sizeLabel.htmlFor = `size-selector-${index}`; // Уникальный ID для label
+                sizeContainer.appendChild(sizeLabel); // Добавляем label в контейнер
+
+                // Выпадающий список для выбора размера
+                const sizeSelector = document.createElement("select");
+                sizeSelector.className = "size-selector";
+                sizeSelector.id = `size-selector-${index}`; // Уникальный ID для select
+                sizes.forEach(size => {
+                    const option = document.createElement("option");
+                    option.value = size;
+                    option.textContent = size;
+                    sizeSelector.appendChild(option);
+                });
+                sizeContainer.appendChild(sizeSelector); // Добавляем выбор размера в контейнер
+
+                // Контейнер для выбора цвета
+                const colorContainer = document.createElement("div");
+                colorContainer.className = "color-container"; // Для стилей, если нужно
+
+                // Название для выбора цвета
+                const colorLabel = document.createElement("label");
+                colorLabel.textContent = "Rang"; // Название для цвета
+                colorLabel.htmlFor = `color-selector-${index}`; // Уникальный ID для label
+                colorContainer.appendChild(colorLabel); // Добавляем label в контейнер
+
+                // Выпадающий список для выбора цвета
+                const colorSelector = document.createElement("select");
+                colorSelector.className = "color-selector";
+                colorSelector.id = `color-selector-${index}`; // Уникальный ID для select
+                colors.forEach(color => {
+                    const option = document.createElement("option");
+                    option.value = color;
+                    option.textContent = color;
+                    colorSelector.appendChild(option);
+                });
+                colorContainer.appendChild(colorSelector); // Добавляем выбор цвета в контейнер
+
+                const addButton = document.createElement("button");
+                addButton.textContent = "Qo'shish";
+                addButton.className = "btn-buy";
+                addButton.onclick = (event) => addItemToCart(event, sizeSelector.value, colorSelector.value);
+
+                card.appendChild(img);
+                card.appendChild(title);
+                card.appendChild(price);
+                card.appendChild(description);
+                card.appendChild(sizeContainer); // Добавляем контейнер для размера
+                card.appendChild(colorContainer); // Добавляем контейнер для цвета
+                card.appendChild(addButton);
+
+                container.appendChild(card);
+            });
+        }
+
+        // Добавление товара в корзину
+        function addItemToCart(event, size, color) {
+            let button = event.target;
+            let shopProducts = button.closest(".product-box");
+            let title = shopProducts.querySelector(".product-title").innerText;
+            let price = shopProducts.querySelector(".price").innerText.replace("Narxi: ", "").trim();
+            let productImg = shopProducts.querySelector(".product-img").src;
+            let productId = shopProducts.getAttribute("data-product-id");
+
+            addProductToCart(title, price, productImg, productId, size, color);
+            updateTotal();
+        }
+
+        // Добавление продукта в корзину
+        function addProductToCart(title, price, productImg, productId, size, color) {
+            let cartItems = document.querySelector(".cart-content");
+
+            let productKey = `${productId}-${size}-${color}`;
+            let cartItemsKeys = cartItems.getElementsByClassName("cart-product-key");
+
+            for (let i = 0; i < cartItemsKeys.length; i++) {
+                if (cartItemsKeys[i].innerText.trim() === productKey.trim()) {
+                    alert("Siz allaqachon bu mahsulotni savatingizga qo'shgansiz");
+                    return;
+                }
+            }
+
+            let cartShopBox = document.createElement("div");
+            cartShopBox.classList.add("cart-box");
+
+            let cartBoxContent = `
+                <img src="${productImg}" alt="" class="cart-img">
+                <div class="detail-box">
+                    <div class="cart-product-title">${title}</div>
+                    <div class="cart-price">Narxi: ${price}</div>
+                    <div class="cart-size-color">
+                        <div class="cart-size">O'lchov: <strong>${size}</strong></div>
+                        <div class="cart-color">Rang: <strong>${color}</strong></div>
+                    </div>
+                    <div class="cart-quantity-box">
+                        <button class="decrease-btn">-</button>
+                        <input type="number" value="1" class="cart-quantity" readonly>
+                        <button class="increase-btn">+</button>
+                    </div>
+                </div>
+                <i class='bx bx-trash-alt cart-remove'></i>
+                <div class="cart-product-id" style="display: none;">${productId}</div>
+                <div class="cart-product-key" style="display: none;">${productKey}</div>
+            `;
+
+            cartShopBox.innerHTML = cartBoxContent;
+            cartItems.append(cartShopBox);
+
+            cartShopBox.querySelector(".cart-remove").addEventListener("click", removeItemFromCart);
+            cartShopBox.querySelector('.decrease-btn').addEventListener("click", decreaseQuantity);
+            cartShopBox.querySelector('.increase-btn').addEventListener("click", increaseQuantity);
+        }
+
+        // Удаление товара из корзины
+        function removeItemFromCart(event) {
+            let button = event.target;
+            button.parentElement.remove(); // Удаляем элемент корзины
+            updateTotal(); // Обновляем общую сумму
+        }
+
+        // Увеличение количества товара
+        function increaseQuantity(event) {
+            let quantityInput = event.target.previousElementSibling; // input с количеством товара
+            let currentQuantity = parseInt(quantityInput.value);
+            quantityInput.value = currentQuantity + 1;
+            updateTotal(); // Обновляем общую сумму
+        }
+
+        // Уменьшение количества товара
+        function decreaseQuantity(event) {
+            let quantityInput = event.target.nextElementSibling; // input с количеством товара
+            let currentQuantity = parseInt(quantityInput.value);
+
+            if (currentQuantity > 1) {
+                quantityInput.value = currentQuantity - 1;
+            }
+
+            updateTotal(); // Обновляем общую сумму
+        }
+
+        // Обновление общей цены в корзине
+        function updateTotal() {
+            let cartBoxes = document.querySelectorAll('.cart-box');
+            let total = 0;
+
+            cartBoxes.forEach(cartBox => {
+                let priceElement = cartBox.querySelector('.cart-price');
+                let quantityElement = cartBox.querySelector('.cart-quantity');
+
+                let price = parseFloat(priceElement.innerText.replace("Narxi: ", "").replace("sum", "").replace(",", "").trim());
+                let quantity = parseInt(quantityElement.value);
+
+                total += price * quantity; // Общая сумма
+            });
+
+            document.querySelector('.total-price').innerText = `Umumiy Narx: ${total} sum`; // Обновляем общую сумму
+        }
+
+        // Обработчик нажатия на иконку корзины
+        document.getElementById("cart-icon").addEventListener("click", function() {
+            const cart = document.querySelector(".cart");
+            cart.classList.toggle("active"); // Открываем или закрываем корзину
+        });
+
+        // Обработчик нажатия на кнопку "Закрыть"
+        document.getElementById("close-cart").addEventListener("click", function() {
+            document.querySelector(".cart").classList.remove("active"); // Закрываем корзину
+        });
+
+        document.getElementById("buy-button").addEventListener("click", buyButtonClicked);
+
+
+        // Обработка нажатия кнопки покупки
+        function buyButtonClicked() {
+          let cartContent = document.querySelector(".cart-content");
+          let items = cartContent.querySelectorAll('.cart-box');
+
+          // Проверка на пустую корзину
+          if (items.length === 0) {
+              alert("Sizning savatingiz bo'sh. Iltimos, buyurtma berishdan oldin narsalarni savatga qo'shing.");
+              return;
+          }
+
+          // Собираем данные о каждом товаре в корзине
+          let products = [];
+          items.forEach(item => {
+              let imgSrc = item.querySelector('.cart-img').src;
+              let title = item.querySelector('.cart-product-title').innerText;
+              let price = item.querySelector('.cart-price').innerText;
+              let quantity = item.querySelector('.cart-quantity').value;
+              
+              // Получаем размер и цвет
+              let size = item.querySelector('.cart-size strong').innerText;
+              let color = item.querySelector('.cart-color strong').innerText;
+
+              products.push({ 
+                  imgSrc: imgSrc,
+                  title: title,
+                  price: price,
+                  quantity: quantity,
+                  size: size,   // Добавляем размер
+                  color: color   // Добавляем цвет
+              });
+          });
+
+          // Отправка данных через Telegram WebApp API
+          if (tg) {
+              tg.sendData(JSON.stringify(products)); // Отправка данных о товарах в виде массива JSON
+
+              // Очистка корзины после покупки
+              while (cartContent.firstChild) {
+                  cartContent.removeChild(cartContent.firstChild);
+              }
+              updateTotal();
+          } else {
+              console.error("Telegram veb-ilovasi mavjud emas.");
+          }
+        }
+
+        // Добавляем обработчик события для поля поиска
+        const searchInput = document.getElementById("search-input");
+        searchInput.addEventListener("input", function() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const filteredData = window.dataProducts.filter(item => 
+                item.title.toLowerCase().includes(searchTerm) // Фильтруем по названию
+            );
+            displayProducts(filteredData); // Отображаем отфильтрованные товары
+        });
+
+        fetchData(); // Загружаем данные с Google Sheets
+    });
+
+  </script>
+
+
+
+</body>
+</html>
